@@ -267,3 +267,92 @@ rm(list=ls())
 gc()
 
 #-----------------------------
+# parallel processing
+# for vs foreach
+library(doParallel)
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+test.name <- "forVforeach"
+dat <- utils::read.table(file = "1000001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+
+dat <- dat[-grep("_ENST",dat$Gene.name,fixed = T),]
+dat$Mutation.AA <- gsub("p.","",dat$Mutation.AA,fixed = T)
+dat <- dat[-grep("?",dat$Mutation.AA,fixed = T),]
+dat <- dat[-grep("=",dat$Mutation.AA,fixed = T),]
+# dim(dat) 106450     40
+
+dat$mutID <- paste(dat$Gene.name,dat$Mutation.AA,sep="=")
+mutations <- unique(dat$mutID) # 79972
+
+DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
+DF <- DF[-1,]
+
+for(i in c(100,1000,10000)){
+  bmark <- microbenchmark("foreach"= {
+    myCluster <- makeCluster(4, type = "FORK",useXDR=F,.combine=cbind)
+  print(myCluster)
+  registerDoParallel(myCluster)
+  results_1 <- foreach(mut = mutations[1:i],.combine = cbind,.inorder = T) %dopar% {
+    var1 <-  plyr::count(dat[dat$mutID==mut,],"Primary.site")
+    var1 <- var1[order(var1$freq,decreasing = T),]
+    return(list(mut,sum(var1$freq),stringi::stri_paste(var1$Primary.site,":",var1$freq,collapse=',')))
+  }
+  stopCluster(myCluster) },
+  "foreach.fast"= {
+    myCluster <- makeCluster(4, type = "FORK",useXDR=F,.combine=cbind)
+    print(myCluster)
+    registerDoParallel(myCluster)
+    results_2 <- foreach(mut = mutations[1:i],.combine = cbind,.inorder = F) %dopar% {
+      var1 <-  plyr::count(dat[dat$mutID==mut,],"Primary.site")
+      var1 <- var1[order(var1$freq,decreasing = T),]
+      return(list(mut,sum(var1$freq),stringi::stri_paste(var1$Primary.site,":",var1$freq,collapse=',')))
+    }
+    stopCluster(myCluster) },
+  "for"={
+    results_3 <- list()
+    for(mut in mutations[1:i]){
+      var1 <-  plyr::count(dat[dat$mutID==mut,],"Primary.site")
+      var1 <- var1[order(var1$freq,decreasing = T),]
+      results_3 <- cbind(results_3,list(mut,sum(var1$freq),stringi::stri_paste(var1$Primary.site,":",var1$freq,collapse=',')))}
+    },times = 5)
+  saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,"_",i,".RDS"))
+  results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+  results$size <- rep(i,length(results[,1]))
+  DF <- rbind.data.frame(DF,results)
+  rm(results,bmark)
+}
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
+rm(list=ls())
+gc()
+
+# lapply vs mclapply vs vs parLapply
+library(doParallel)
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+test.name <- "lapplyVmclapplyVparLapply"
+dat <- utils::read.table(file = "100001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+
+DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
+DF <- DF[-1,]
+
+for(i in c(10,100,1000,10000,length(unique(dat$MUTATION_ID)))){
+  bmark <- microbenchmark(
+    "lapply" ={
+      res_l <- lapply(X = unique(dat$Gene.name), FUN = function(X) mean(dat[dat$Gene.name==X,"FATHMM.score"],na.rm = T))
+    },
+    "parLapply" ={
+      myCluster <- makeCluster(4, type = "FORK",useXDR=F,.combine=cbind)
+      print(myCluster)
+      registerDoParallel(myCluster)
+      res_par <- parLapply(cl = myCluster,X = unique(dat$Gene.name), fun = function(X) mean(dat[dat$Gene.name==X,"FATHMM.score"],na.rm = T))
+      stopCluster(myCluster)
+    }, 
+    "mclapply" = {
+      res_mcl <- mclapply(X = unique(dat$Gene.name), FUN = function(X) mean(dat[dat$Gene.name==X,"FATHMM.score"],na.rm = T),mc.cores = parallel::detectCores())
+    }, times = 5)
+  # print(identical(res_l,res_par))
+  # print(identical(res_mcl,res_par))
+  saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,"_",i,".RDS"))
+  results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+  results$size <- rep(i,length(results[,1]))
+  DF <- rbind.data.frame(DF,results)
+  rm(results,bmark)
+}
