@@ -148,6 +148,39 @@ saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
 
+#----------------------------
+# unlist & fixed
+test.name <- "fixed_and_unlist"
+dat <- utils::read.table(file = "1000001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+
+genomePosition <- dat$Mutation.genome.position
+genomePos <- genomePosition[1:i]
+
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+
+DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
+DF <- DF[-1,]
+
+for(i in c(1,10,100,1000,10000,100000,1000000)){
+  genomePos <- dat$Mutation.genome.position[1:i]
+  bmark <- microbenchmark("regular" = {
+    res_1 <-  base::substring(text = genomePos,first = {unlist(base::gregexpr(pattern = ":",text = genomePos))+1})
+  }, "smart"={
+    res_2 <- base::substring(text = genomePos,first = {unlist(base::gregexpr(pattern = ":",text = genomePos, fixed = T),use.names = F)+1})
+  }, times = 5)
+  # print(identical(res_1,res_2))
+  saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,"_",i,".RDS"))
+  results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+  results$size <- rep(i,length(results[,1]))
+  DF <- rbind.data.frame(DF,results)
+  rm(results,bmark)
+}
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
+
+rm(list=ls())
+gc()
+
+
 #-----------------------------
 # for vs apply
 test.name <- "for_V_apply"
