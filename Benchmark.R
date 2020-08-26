@@ -3,6 +3,7 @@ setwd("~/OneDrive - O365 Turun yliopisto/ExtraWorkSync/Klaus-Lab-Data/Big Data/B
 library(microbenchmark)
 source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
 
+#-----------------
 ## Reading TSV
 # base, readr, vroom
 test.name <- "readingTSV"
@@ -36,6 +37,7 @@ saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
 
+#-----------------------
 # Writing TSV
 # base, readr, vroom then saveRDS
 test.name <- "saveRDS"
@@ -77,7 +79,7 @@ saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
 
-
+#--------------------------------
 # Vectorized functions: parenthesis vs curly
 test.name <- "brackets"
 dat <- utils::read.table(file = "1000001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
@@ -102,6 +104,7 @@ saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
 
+#----------------------------
 # Vectorized functions: mean vs rowmeans
 test.name <- "Vectorize-mean"
 dat <- utils::read.table(file = "1000001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
@@ -123,6 +126,7 @@ saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
 
+#----------------------
 # Vectorization
 test.name <- "vectorization"
 dat <- utils::read.table(file = "1000001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
@@ -144,6 +148,89 @@ saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
 
+#-----------------------------
+# for vs apply
+test.name <- "for_V_apply"
+dat <- utils::read.table(file = "100001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
 
+genomePosition <- dat$Mutation.genome.position
 
+bmark <- microbenchmark("for" = {
+  res_for <- rep(NA,length(genomePosition))
+  for(i in seq_along(genomePosition)){
+    genomePos <- base::substring(text = genomePosition[i],first = base::gregexpr(pattern = ":",text = genomePosition[i], fixed = T)[[1]][1]+1)
+    minus <- base::gregexpr(pattern = "-",text = genomePos, fixed = T)[[1]][1]
+    res_for[i] <- as.integer(substring(text = genomePos,first = 1,last = minus-1))-as.integer(substring(text = genomePos,first = minus+1))
+  }
+},
+"apply" = {
+  # define function
+  find_length <- function(genomePos = NULL){
+    genomePos <- base::substring(text = genomePos,first = base::gregexpr(pattern = ":",text = genomePos, fixed = T)[[1]][1]+1)
+    minus <- base::gregexpr(pattern = "-",text = genomePos, fixed = T)[[1]][1]
+    return(as.integer(substring(text = genomePos,first = 1,last = minus-1))-as.integer(substring(text = genomePos,first = minus+1)))
+  }
+  res_apply <- sapply(X = genomePosition,FUN = find_length,USE.NAMES = F)
+},
+"smart" = {
+  # define function that iterates by itself
+  find_length_base <- function(genomePos = NULL){
+    genomePos <- base::substring(text = genomePos,first = {unlist(base::gregexpr(pattern = ":",text = genomePos, fixed = T),use.names = F)+1})
+    minus <- unlist(base::gregexpr(pattern = "-",text = genomePos, fixed = T),use.names = F)
+    return(as.integer(substring(text = genomePos,first = 1,last = minus-1))-as.integer(substring(text = genomePos,first = minus+1)))
+  }
+  res_smart <- find_length_base(genomePos = genomePosition)
+}, times = 5 )
 
+identical(res_apply,res_for)
+identical(res_apply,res_smart)
+saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,".RDS"))
+rm(res_for,res_apply,res_smart,i,genomePos,minus,find_length,find_length_base,genomePosition)
+
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+DF <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
+rm(list=ls())
+gc()
+
+#-------------------------------------
+# base vs stringi
+test.name <- "base_V_stringi"
+dat <- utils::read.table(file = "100001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+
+find_length_stringi <- function(genomePos = NULL){
+  genomePos <- stringi::stri_sub(str = genomePos,from =  stringi::stri_locate_first_fixed(str = genomePos,pattern = ":")[,'start']+1,to = -1)
+  minus <- stringi::stri_locate_first_fixed(str = genomePos,pattern = "-")[,'start']
+  return(as.integer(stringi::stri_sub(str = genomePos, from=1, to = minus-1))-as.integer(stringi::stri_sub(str = genomePos, from=minus+1, to = -1)))
+}
+
+find_length_base <- function(genomePos = NULL){
+  genomePos <- base::substring(text = genomePos,first = {unlist(base::gregexpr(pattern = ":",text = genomePos, fixed = T),use.names = F)+1})
+  minus <- unlist(base::gregexpr(pattern = "-",text = genomePos, fixed = T),use.names = F)
+  return(as.integer(substring(text = genomePos,first = 1,last = minus-1))-as.integer(substring(text = genomePos,first = minus+1)))
+}
+
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+
+DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
+DF <- DF[-1,]
+
+for(i in c(1,10,100,1000,10000,100000)){
+  genomePosition <- dat$Mutation.genome.position[1:i]
+  bmark <- microbenchmark("base" = {
+    res_b <- find_length_base(genomePos = genomePosition)
+  }, "stringi"={
+    res_s <- find_length_stringi(genomePos = genomePosition)
+  }, times = 5)
+  # print(identical(res_b,res_s))
+  saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,"_",i,".RDS"))
+  results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+  results$size <- rep(i,length(results[,1]))
+  DF <- rbind.data.frame(DF,results)
+  rm(results,bmark)
+}
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
+rm(list=ls())
+gc()
+
+#-----------------------------
