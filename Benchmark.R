@@ -78,6 +78,42 @@ for(f in file.prefix){
 saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
+#---------------------------
+# assigning vs concatenating
+
+test.name <- "assignVconcat"
+dat <- utils::read.table(file = "100001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+
+DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
+DF <- DF[-1,]
+
+for(i in c(10,100,1000,10000,100000)){
+  strings <- dat[1:i,"HGVSC"]
+  bmark <- microbenchmark("assign"={
+    ENS_ID <- rep(NA,length(strings))
+    for(idx in seq_along(strings)){
+      ENS_ID[idx] <- unlist(strsplit(x = strings[idx],split = ".",fixed =T),use.names = F)[1]
+    }
+  },
+  "concat"={
+    ENS_ID <- c()
+    for(idx in seq_along(strings)){
+      ENS_ID <- c(ENS_ID,unlist(strsplit(x = strings[idx],split = ".",fixed =T),use.names = F)[1])
+    }
+  }, "ideal"={
+    ENS_ID <- unlist(strsplit(x = strings,split = ".",fixed =T),use.names = F)[seq(1,3*length(strings),by = 3)]
+  }, times = 5)
+  saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,"_",i,".RDS"))
+  results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+  results$size <- rep(i,length(results[,1]))
+  DF <- rbind.data.frame(DF,results)
+  rm(results,bmark)
+}
+DF$size <- as.integer(format(DF$size,scientific = F))
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
+
 
 #--------------------------------
 # Vectorized functions: parenthesis vs curly
@@ -356,3 +392,5 @@ for(i in c(10,100,1000,10000,length(unique(dat$MUTATION_ID)))){
   DF <- rbind.data.frame(DF,results)
   rm(results,bmark)
 }
+
+
