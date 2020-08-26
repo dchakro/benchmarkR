@@ -7,11 +7,11 @@ file.prefix <- c("11", "101", "1001", "10001", "100001", "1000001")
 Number.of.alternatives <- 3 # base, readr, vroom
 DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
 DF <- DF[-1,]
-for(f in file.prefix[6]){
+for(f in file.prefix){
   file.name <- paste0(f,"_d.tsv")
   bmark <- microbenchmark(
     "base" = {
-      dat <- read.table(file = file.name,header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+      dat <- base::read.table(file = file.name,header = T,sep = "\t",as.is = T,stringsAsFactors = T)
       rm(dat)
     },
     "readr" = {
@@ -24,10 +24,10 @@ for(f in file.prefix[6]){
     }
     ,times = 5)
     gc()
-    saveRDS(bmark,file = paste0("bmark_reading_",f,".RDS"))
+    saveRDS(bmark,file = paste0("../bmark/bmark_reading_",f,".RDS"))
     results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
     results$size <- rep(f,length(results[,1]))
     DF <- rbind.data.frame(DF,results)
     rm(results,bmark)
 }
-
+saveRDS(DF,file = paste0("../results/results_reading_",f,".RDS"))
