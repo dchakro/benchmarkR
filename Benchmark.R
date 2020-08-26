@@ -32,7 +32,7 @@ for(f in file.prefix){
     DF <- rbind.data.frame(DF,results)
     rm(results,bmark)
 }
-saveRDS(DF,file = paste0("../results/results_",test.name,"_",f,".RDS"))
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
 
@@ -73,8 +73,77 @@ for(f in file.prefix){
   DF <- rbind.data.frame(DF,results)
   rm(results,bmark)
 }
-saveRDS(DF,file = paste0("../results/results_",test.name,"_",f,".RDS"))
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
 
-DF <- readRDS("../results/results_reading_1000001.RDS")
+
+# Vectorized functions: parenthesis vs curly
+test.name <- "brackets"
+dat <- utils::read.table(file = "1000001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+bmark <- microbenchmark("parenthesis" = {
+  pM <- rep(NA,length(dat$Gene.name))
+  for(i in seq_along(dat$Gene.name)){
+    pM[i] <- ((dat$ID_tumour[i]+dat$ID_sample[i]+dat$MUTATION_ID[i])/3)
+  }
+ },
+"curly" = {
+  cM <- rep(NA,length(dat$Gene.name))
+  for(i in seq_along(dat$Gene.name)){
+    cM[i] <- {{dat$ID_tumour[i]+dat$ID_sample[i]+dat$MUTATION_ID[i]}/3}
+  }
+}, times = 5 )
+identical(cM,pM)
+saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,".RDS"))
+rm(cM,pM,i)
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+DF <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
+rm(list=ls())
+gc()
+
+# Vectorized functions: mean vs rowmeans
+test.name <- "Vectorize-mean"
+dat <- utils::read.table(file = "1000001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+bmark <- microbenchmark("rowMeans" = {
+  rM <- rowMeans(dat[,c("ID_sample","ID_tumour","MUTATION_ID")])
+},
+"mean" = {
+  M <- rep(NA,length(dat$Gene.name))
+  for(i in seq_along(dat$Gene.name)){
+    M[i] <- {{dat$ID_tumour[i]+dat$ID_sample[i]+dat$MUTATION_ID[i]}/3}
+  }
+}, times = 5 )
+identical(M,rM)
+saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,".RDS"))
+rm(M,rM,i)
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+DF <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
+rm(list=ls())
+gc()
+
+# Vectorization
+test.name <- "vectorization"
+dat <- utils::read.table(file = "1000001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+bmark <- microbenchmark("vectorize" = {
+  calc_vec <- {{dat$ID_tumour+dat$ID_sample}/dat$HGNC.ID}
+},
+  "for" = {
+    calc_for <- rep(NA,length(dat$Gene.name))
+    for(i in seq_along(dat$Gene.name)){
+      calc_for[i] <- {{dat$ID_tumour[i]+dat$ID_sample[i]}/dat$HGNC.ID[i]}
+    }
+  }, times = 5 )
+identical(calc_for,calc_vec)
+saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,".RDS"))
+rm(calc_for,i,calc_vec)
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+DF <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
+rm(list=ls())
+gc()
+
+
+
+
