@@ -1,11 +1,11 @@
 rm(list=ls())
 setwd("~/OneDrive - O365 Turun yliopisto/ExtraWorkSync/Klaus-Lab-Data/Big Data/BenchmarkR/COSMIC_test/subset/")
 library(microbenchmark)
-source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
 
 #-----------------
 ## Reading TSV
 # base, readr, vroom
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
 test.name <- "readingTSV"
 file.prefix <- c("11", "101", "1001", "10001", "100001", "1000001")
 DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
@@ -407,6 +407,35 @@ for(i in c(10,100,1000,10000,81497)){
   # bmark_lapplyVmclapplyVparLapply_10.RDS
 }
 
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
+rm(list=ls())
+gc()
+
+
+# ---------- parallel saveRDS.gz()
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+test.name <- "parallel_saveRDS"
+file.prefix <- c("11", "101", "1001", "10001", "100001", "1000001")
+DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
+DF <- DF[-1,] 
+source('https://gist.githubusercontent.com/dchakro/8b1e97ba6853563dd0bb5b7be2317692/raw/parallelRDS.R')
+for(f in file.prefix){
+  dat <- utils::read.table(file = paste0(f,"_d.tsv"),header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+  bmark <- microbenchmark(
+    "base" = {
+      base::saveRDS(object = dat, compress = "gzip",file = "/dev/null")
+    },
+    "parallel" = {
+      saveRDS.gz(object = dat, threads = parallel::detectCores(), compression_level = 6, file = "/dev/null")
+    }
+    ,times = 5)
+  gc()
+  saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,"_",f,".RDS"))
+  results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+  results$size <- rep(f,length(results[,1]))
+  DF <- rbind.data.frame(DF,results)
+  rm(results,bmark)
+}
 saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
