@@ -8,6 +8,36 @@ customtheme <- DC_theme_generator(type='L')
 
 # rm(list=ls()[!ls() %in% c("DC_theme_generator","ggplotBreaks")])
 rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
+#-----------------
+## Assign vs concat
+results <- readRDS("results/results_assignVconcat.RDS")
+results$size <- as.character(results$size)
+results$time <- results$time/1e+06
+results$sd <- results$sd/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr, group = interaction(expr,size)))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+ggtitle("Populating a vector")+facet_wrap(~size,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9),angle=45)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/assignVconcat.svg",height = 5,width = 14)
+
+
+DF <- data.frame(expr=NA,time=NA,group=NA)
+DF <- DF[-1,]
+testname <- "bmark_assignVconcat_"
+for (f in list.files(path = "bmark/",pattern = testname)){
+  tmp <- readRDS(paste0("bmark/",f))
+  tmp$group <- rep(f,length(tmp[,1]))
+  DF <- rbind(DF,tmp)
+}
+DF$group <- gsub(testname,"",DF$group,fixed = T)
+DF$group <- gsub(".RDS","",DF$group,fixed = T)
+# DF$group <- as.integer(DF$group)
+rm(tmp,testname,f)
+
+DF$time <- DF$time/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("size")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("Populating a vector")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/assignVconcat_2.svg",height = 3,width = 10)
+
 #-----------
 # base_V_stringi
 DF <- data.frame(expr=NA,time=NA,group=NA)
@@ -34,4 +64,16 @@ results$time <- results$time/1e+06
 results$sd <- results$sd/1e+06
 ggplot(data = results, aes(x = size, y = time, color = expr, group = expr))+geom_point(size=2)+geom_line(size=1)+geom_errorbar(aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+ggtitle("base vs stringi")
 ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/baseVstringi_2.svg",height = 5,width = 5)
+
+
+
+
+#-----------------
+## Vectorization
+DF <- readRDS("bmark/bmark_vectorization.RDS")
+results <- readRDS("results/results_vectorization.RDS")
+DF$time <- DF$time/1e+06
+ggplot(data = DF, aes(x = expr, y = time, fill = expr))+stat_summary(fun.y = median, fun.ymin = median, fun.ymax = median,geom = "crossbar",color="black",width = 0.25)+geom_dotplot(binwidth = 100,binaxis = "y",dotsize=1,stackdir = "center",position = "dodge")+customtheme+ylab("Time (µs)")+xlab("Method")+annotate("text",x=1,y=150,label="9.77 µs")+annotate("text",x=2,y=4230,label="3881 µs")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/vectorization.svg",height = 5,width = 4)
+
 
