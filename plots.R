@@ -138,15 +138,156 @@ rm(tmp,testname,f)
 
 DF$time <- DF$time/1e+09
 customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
-ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (seconds)")+xlab("size")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("forVforeach")
-ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/forVforeach.svg",height = 4,width = 6)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(jitter.width = 1.25,seed = 21),aes(fill = expr),pch=21)+customtheme+ylab("Time (seconds)")+xlab("Method")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("forVforeach")+expand_limits(y = 0)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/forVforeach.svg",height = 4,width = 8)
+
+#-----------
+# lapplyVmclapplyVparLapply
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
+results <- readRDS("results/results_lapplyVmclapplyVparLapply.RDS")
+results$size <- as.character(results$size)
+results$time <- results$time/1e+06
+results$sd <- results$sd/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr, group = interaction(expr,size)))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("lapply family")+facet_wrap(~size,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9))+expand_limits(y = 0)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/lapply_family_bar.svg",height = 5,width = 14)
+
+
+DF <- data.frame(expr=NA,time=NA,group=NA)
+DF <- DF[-1,]
+testname <- "bmark_lapplyVmclapplyVparLapply_"
+for (f in list.files(path = "bmark/",pattern = testname)){
+  tmp <- readRDS(paste0("bmark/",f))
+  tmp$group <- rep(f,length(tmp[,1]))
+  DF <- rbind(DF,tmp)
+}
+DF$group <- gsub(testname,"",DF$group,fixed = T)
+DF$group <- gsub(".RDS","",DF$group,fixed = T)
+# DF$group <- as.integer(DF$group)
+rm(tmp,testname,f)
+
+DF$time <- DF$time/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = DF, aes(x = group, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = group))+geom_point(position = position_jitterdodge(),aes(fill = group),pch=21)+customtheme+ylab("Time (µs)")+xlab("Size")+facet_wrap(~expr ,nrow = 1,drop=T,scales = "free")+ggtitle("String operations")+scale_y_continuous(limits = c(0,max(DF$time)))+expand_limits(y = 0)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/lapply_family_box.svg",height = 4,width = 10)
+
+#------------
+# parallel_saveRDS
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
+results <- readRDS("results/results_parallel_saveRDS.RDS")
+results$size <- as.character(format(as.integer(results$size)-1,scientific=F,trim = T))
+results$time <- results$time/1e+06
+results$sd <- results$sd/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr, group = interaction(expr,size)))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("parallel saveRDS")+facet_wrap(~size,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9))+expand_limits(y = 0)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/parallel_saveRDS_bar.svg",height = 5,width = 14)
+
+
+DF <- data.frame(expr=NA,time=NA,group=NA)
+DF <- DF[-1,]
+testname <- "bmark_parallel_saveRDS_"
+for (f in list.files(path = "bmark/",pattern = testname)){
+  tmp <- readRDS(paste0("bmark/",f))
+  tmp$group <- rep(f,length(tmp[,1]))
+  DF <- rbind(DF,tmp)
+}
+DF$group <- gsub(testname,"",DF$group,fixed = T)
+DF$group <- gsub(".RDS","",DF$group,fixed = T)
+DF$group <- as.character(format(as.integer(DF$group)-1,scientific=F,trim = T))
+rm(tmp,testname,f)
+
+DF$time <- DF$time/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(jitter.width = 1.25,seed = 21),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("Method")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("parallel saveRDS")+expand_limits(y = 0)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/parallel_saveRDS_box.svg",height = 4,width = 12)
+
+#---------
+# readingTSV
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
+results <- readRDS("results/results_readingTSV.RDS")
+results$size <- as.character(format(as.integer(results$size)-1,scientific=F,trim = T))
+results$time <- results$time/1e+06
+results$sd <- results$sd/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr, group = interaction(expr,size)))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("Reading files")+facet_wrap(~size,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9))+expand_limits(y = 0)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/reading_tsv_bar.svg",height = 5,width = 14)
+
+
+DF <- data.frame(expr=NA,time=NA,group=NA)
+DF <- DF[-1,]
+testname <- "bmark_readingTSV_"
+for (f in list.files(path = "bmark/",pattern = testname)){
+  tmp <- readRDS(paste0("bmark/",f))
+  tmp$group <- rep(f,length(tmp[,1]))
+  DF <- rbind(DF,tmp)
+}
+DF$group <- gsub(testname,"",DF$group,fixed = T)
+DF$group <- gsub(".RDS","",DF$group,fixed = T)
+DF$group <- as.character(format(as.integer(DF$group)-1,scientific=F,trim = T))
+rm(tmp,testname,f)
+
+DF$time <- DF$time/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(jitter.width = 1.25,seed = 21),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("Method")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("Reading files")+expand_limits(y = 0)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/reading_tsv_box.svg",height = 4,width = 12)
+
+#----------
+# Saving RDS
+# saveRDS
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
+results <- readRDS("results/results_saveRDS.RDS")
+results$size <- as.character(format(as.integer(results$size)-1,scientific=F,trim = T))
+results$time <- results$time/1e+06
+results$sd <- results$sd/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr, group = interaction(expr,size)))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("Reading files")+facet_wrap(~size,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9))+expand_limits(y = 0)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/saveRDS_bar.svg",height = 5,width = 14)
+
+
+DF <- data.frame(expr=NA,time=NA,group=NA)
+DF <- DF[-1,]
+testname <- "bmark_saveRDS_"
+for (f in list.files(path = "bmark/",pattern = testname)){
+  tmp <- readRDS(paste0("bmark/",f))
+  tmp$group <- rep(f,length(tmp[,1]))
+  DF <- rbind(DF,tmp)
+}
+DF$group <- gsub(testname,"",DF$group,fixed = T)
+DF$group <- gsub(".RDS","",DF$group,fixed = T)
+DF$group <- as.character(format(as.integer(DF$group)-1,scientific=F,trim = T))
+rm(tmp,testname,f)
+
+DF$time <- DF$time/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(jitter.width = 1.25,seed = 21),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("Method")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("Reading files")+expand_limits(y = 0)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/saveRDS_box.svg",height = 4,width = 12)
 
 #-----------------
-## Vectorization
-DF <- readRDS("bmark/bmark_vectorization.RDS")
+# Vectorization
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
 results <- readRDS("results/results_vectorization.RDS")
+DF <- readRDS("bmark/bmark_vectorization.RDS")
 DF$time <- DF$time/1e+06
-ggplot(data = DF, aes(x = expr, y = time, fill = expr))+stat_summary(fun.y = median, fun.ymin = median, fun.ymax = median,geom = "crossbar",color="black",width = 0.25)+geom_dotplot(binwidth = 100,binaxis = "y",dotsize=1,stackdir = "center",position = "dodge")+customtheme+ylab("Time (µs)")+xlab("Method")+annotate("text",x=1,y=150,label="9.77 µs")+annotate("text",x=2,y=4230,label="3881 µs")
-ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/vectorization.svg",height = 5,width = 4)
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45,legend = F)
 
+by(data = DF$time,DF$expr,mean)
+ggplot(data = DF, aes(x = expr, y = time))+geom_boxplot(size=0.5,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(jitter.width = 2,seed = 21),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("Vectorization vs for")+annotate("text",x=1,y=100,label="7.95 µs")+annotate("text",x=2,y=4000,label="3882 µs")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/vectorization.svg",height = 5,width = 3)
 
+#----------
+# Vectorization - means
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
+results <- readRDS("results/results_Vectorize-mean.RDS")
+DF <- readRDS("bmark/bmark_Vectorize-mean.RDS")
+DF$time <- DF$time/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45,legend = F)
+
+by(data = DF$time,DF$expr,mean)
+ggplot(data = DF, aes(x = expr, y = time))+geom_boxplot(size=0.5,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(jitter.width = 2,seed = 21),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("Vectorized mean")+annotate("text",x=1,y=300,label="31.3 µs")+annotate("text",x=2,y=9000,label="8970 µs")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/Vectorization-mean.svg",height = 5,width = 3)
