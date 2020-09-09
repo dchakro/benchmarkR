@@ -4,20 +4,19 @@ library(ggplot2)
 
 source('https://raw.githubusercontent.com/dchakro/ggplot_themes/master/DC_theme_generator.R')
 # source('https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/ggplotBreaks.R')
-customtheme <- DC_theme_generator(type='L')
-
 # rm(list=ls()[!ls() %in% c("DC_theme_generator","ggplotBreaks")])
-rm(list=ls()[!ls() %in% c("DC_theme_generator")])
 
 #-----------------
 ## Assign vs concat
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
 results <- readRDS("results/results_assignVconcat.RDS")
 results$size <- as.character(results$size)
 results$time <- results$time/1e+06
 results$sd <- results$sd/1e+06
 customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
-ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr, group = interaction(expr,size)))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+ggtitle("Populating a vector")+facet_wrap(~size,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9),angle=45)
-ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/assignVconcat.svg",height = 5,width = 14)
+ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr, group = interaction(expr,size)))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+ggtitle("Populating a vector")+facet_wrap(~size,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9))
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/assignVconcat_bar.svg",height = 5,width = 14)
 
 
 DF <- data.frame(expr=NA,time=NA,group=NA)
@@ -35,11 +34,22 @@ rm(tmp,testname,f)
 
 DF$time <- DF$time/1e+06
 customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
-ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("size")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("Populating a vector")
-ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/assignVconcat_2.svg",height = 3,width = 10)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("size")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("Populating a vector")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/assignVconcat_box.svg",height = 4,width = 10)
 
 #-----------
 # base_V_stringi
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
+results <- readRDS("results/results_base_V_stringi.RDS")
+results$size <- as.character(results$size)
+results$time <- results$time/1e+06
+results$sd <- results$sd/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr, group = interaction(expr,size)))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+ggtitle("String operations")+facet_wrap(~size,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9))
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/baseVstringi_bar.svg",height = 5,width = 14)
+
+
 DF <- data.frame(expr=NA,time=NA,group=NA)
 DF <- DF[-1,]
 testname <- "bmark_base_V_stringi_"
@@ -54,18 +64,55 @@ DF$group <- gsub(".RDS","",DF$group,fixed = T)
 rm(tmp,testname,f)
 
 DF$time <- DF$time/1e+06
-customtheme <- DC_theme_generator(type='L')
-ggplot(data = DF, aes(x = group, y = time,fill=expr,group = interaction(group,expr)))+geom_boxplot(outlier.colour = NA,size=1,fill="white",aes(color=expr))+geom_point(pch=21,,size=2,position = position_jitterdodge())+customtheme+ylab("Time (µs)")+xlab("Number of observations")+facet_wrap(~group,nrow = 1,drop=T,scales = "free")+ggtitle("base vs stringi")
-ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/baseVstringi.svg",height = 3,width = 10)
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("size")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("String operations")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/baseVstringi_box.svg",height = 4,width = 10)
 
-results <- readRDS("results/results_base_V_stringi.RDS")
-results$size <- as.character(results$size)
-results$time <- results$time/1e+06
-results$sd <- results$sd/1e+06
-ggplot(data = results, aes(x = size, y = time, color = expr, group = expr))+geom_point(size=2)+geom_line(size=1)+geom_errorbar(aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+ggtitle("base vs stringi")
-ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/baseVstringi_2.svg",height = 5,width = 5)
+#------------
+# brackets
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
 
+DF <- readRDS("bmark/bmark_brackets.RDS")
+DF$time <- DF$time/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = DF, aes(x = expr, y = time))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("size")+ggtitle("Brackets")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/brackets_box.svg",height = 5,width = 4)
 
+#----------
+# fixed_and_unlist
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
+DF <- data.frame(expr=NA,time=NA,group=NA)
+DF <- DF[-1,]
+testname <- "bmark_fixed_and_unlist_"
+for (f in list.files(path = "bmark/",pattern = testname)){
+  tmp <- readRDS(paste0("bmark/",f))
+  tmp$group <- rep(f,length(tmp[,1]))
+  DF <- rbind(DF,tmp)
+}
+DF$group <- gsub(testname,"",DF$group,fixed = T)
+DF$group <- gsub(".RDS","",DF$group,fixed = T)
+# DF$group <- as.integer(DF$group)
+rm(tmp,testname,f)
+
+DF$time <- DF$time/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("size")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("fixed & unlist")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/fixed_and_unlist_box.svg",height = 4,width = 12)
+
+#-----------
+# for_V_apply
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
+DF <- readRDS("bmark/bmark_for_V_apply.RDS")
+DF$time <- DF$time/1e+06
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+
+ggplot(data = DF[DF$expr!="smart",], aes(x = expr, y = time))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("size")+ggtitle("for vs apply")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/for_v_apply_box.svg",height = 5,width = 3)
+
+ggplot(data = DF, aes(x = expr, y = time))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("size")+ggtitle("for vs apply s smart")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/for_v_apply_box2.svg",height = 5,width = 4)
 
 
 #-----------------
