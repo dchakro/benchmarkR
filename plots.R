@@ -165,7 +165,7 @@ ggplot(data = DF, aes(x = group, y = time, group = interaction(group,expr)))+geo
 ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/lapply_family_box_1.svg",height = 4,width = 8)
 
 
-ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("Size")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("String operations")+expand_limits(y = 0)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("Method")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("String operations")+expand_limits(y = 0)
 ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/lapply_family_box_2.svg",height = 4,width = 8)
 
 #------------
@@ -240,7 +240,7 @@ results$size <- as.character(format(as.integer(results$size)-1,scientific=F,trim
 results$time <- results$time/1e+06
 results$sd <- results$sd/1e+06
 customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
-ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr, group = interaction(expr,size)))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("Reading files")+facet_wrap(~size,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9))+expand_limits(y = 0)
+ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr, group = interaction(expr,size)))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("Saving files")+facet_wrap(~size,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9))+expand_limits(y = 0)
 ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/saveRDS_bar.svg",height = 5,width = 14)
 
 
@@ -259,7 +259,7 @@ rm(tmp,testname,f)
 
 DF$time <- DF$time/1e+06
 customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
-ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(jitter.width = 1.25,seed = 21),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("Method")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("Reading files")+expand_limits(y = 0)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(jitter.width = 1.25,seed = 21),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("Method")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("Saving files")+expand_limits(y = 0)
 ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/saveRDS_box.svg",height = 4,width = 12)
 
 #-----------------
