@@ -393,4 +393,21 @@ for(i in c(10,100,1000,10000,length(unique(dat$MUTATION_ID)))){
   rm(results,bmark)
 }
 
+# ---- Re-Creating "results" of bmarks as it was not saved earlier.
+rm(list=ls())
+source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+test.name <- "lapplyVmclapplyVparLapply"
+DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
+DF <- DF[-1,]
+for(i in c(10,100,1000,10000,81497)){
+  bmark <- readRDS(paste0("../bmark/bmark_",test.name,"_",i,".RDS"))
+  results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+  results$size <- rep(i,length(results[,1]))
+  DF <- rbind.data.frame(DF,results)
+  # bmark_lapplyVmclapplyVparLapply_10.RDS
+}
+
+saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
+rm(list=ls())
+gc()
 
