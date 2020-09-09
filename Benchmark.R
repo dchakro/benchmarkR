@@ -364,12 +364,14 @@ gc()
 library(doParallel)
 source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
 test.name <- "lapplyVmclapplyVparLapply"
-dat <- utils::read.table(file = "100001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+all <- utils::read.table(file = "1000001_d.tsv",header = T,sep = "\t",as.is = T,stringsAsFactors = T)
+uniqueIDs <- unique(all$MUTATION_ID)
 
 DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
 DF <- DF[-1,]
 
-for(i in c(10,100,1000,10000,length(unique(dat$MUTATION_ID)))){
+for(i in c(100,1000,10000,100000)){
+  dat <- all[all$MUTATION_ID %in% uniqueIDs[1:i],]
   bmark <- microbenchmark(
     "lapply" ={
       res_l <- lapply(X = unique(dat$Gene.name), FUN = function(X) mean(dat[dat$Gene.name==X,"FATHMM.score"],na.rm = T))
@@ -399,7 +401,7 @@ source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summary
 test.name <- "lapplyVmclapplyVparLapply"
 DF <- data.frame(expr="",N=NA,time=NA,sd=NA,se=NA,ci=NA,size=NA,stringsAsFactors = F)
 DF <- DF[-1,]
-for(i in c(10,100,1000,10000,81497)){
+for(i in c(100,1000,10000,100000)){
   bmark <- readRDS(paste0("../bmark/bmark_",test.name,"_",i,".RDS"))
   results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
   results$size <- rep(i,length(results[,1]))
