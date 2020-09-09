@@ -276,7 +276,7 @@ find_length_stringi <- function(genomePos = NULL){
 find_length_base <- function(genomePos = NULL){
   genomePos <- base::substring(text = genomePos,first = {unlist(base::gregexpr(pattern = ":",text = genomePos, fixed = T),use.names = F)+1})
   minus <- unlist(base::gregexpr(pattern = "-",text = genomePos, fixed = T),use.names = F)
-  return(as.integer(substring(text = genomePos,first = 1,last = minus-1))-as.integer(substring(text = genomePos,first = minus+1)))
+  return(as.integer(base::substring(text = genomePos,first = 1,last = minus-1))-as.integer(base::substring(text = genomePos,first = minus+1)))
 }
 
 source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
