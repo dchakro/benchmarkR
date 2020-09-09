@@ -114,6 +114,27 @@ ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/bench
 ggplot(data = DF, aes(x = expr, y = time))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("size")+ggtitle("for vs apply s smart")
 ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/for_v_apply_box2.svg",height = 5,width = 4)
 
+#-----------
+# bmark_forVforeach
+rm(list=ls()[!ls() %in% c("DC_theme_generator")])
+
+DF <- data.frame(expr=NA,time=NA,group=NA)
+DF <- DF[-1,]
+testname <- "bmark_forVforeach_"
+for (f in list.files(path = "bmark/",pattern = testname)){
+  tmp <- readRDS(paste0("bmark/",f))
+  tmp$group <- rep(f,length(tmp[,1]))
+  DF <- rbind(DF,tmp)
+}
+DF$group <- gsub(testname,"",DF$group,fixed = T)
+DF$group <- gsub(".RDS","",DF$group,fixed = T)
+# DF$group <- as.integer(DF$group)
+rm(tmp,testname,f)
+
+DF$time <- DF$time/1e+09
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+ggplot(data = DF, aes(x = expr, y = time, group = interaction(group,expr)))+geom_boxplot(size=0.75,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(),aes(fill = expr),pch=21)+customtheme+ylab("Time (seconds)")+xlab("size")+facet_wrap(~group ,nrow = 1,drop=T,scales = "free")+ggtitle("forVforeach")
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/forVforeach.svg",height = 4,width = 6)
 
 #-----------------
 ## Vectorization
