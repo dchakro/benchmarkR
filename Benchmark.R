@@ -91,18 +91,19 @@ DF <- DF[-1,]
 
 for(i in c(10,100,1000,10000,100000)){
   strings <- dat[1:i,"HGVSC"]
-  bmark <- microbenchmark("assign"={
-    ENS_ID <- rep(NA,length(strings))
+  bmark <- microbenchmark(
+  "assign"={ # assign to a specific index  
+    ENS_ID <- rep(NA,length(strings)) # Initialize an empty vector
     for(idx in seq_along(strings)){
       ENS_ID[idx] <- unlist(strsplit(x = strings[idx],split = ".",fixed =T),use.names = F)[1]
     }
   },
-  "concat"={
-    ENS_ID <- c()
+  "concat"={ # concat: concatenation
+    ENS_ID <- c() # declare vector
     for(idx in seq_along(strings)){
       ENS_ID <- c(ENS_ID,unlist(strsplit(x = strings[idx],split = ".",fixed =T),use.names = F)[1])
     }
-  }, "ideal"={
+  }, "ideal"={ # ideal: vectorization (i.e. skip the for loop) – here it cycles
     ENS_ID <- unlist(strsplit(x = strings,split = ".",fixed =T),use.names = F)[seq(1,3*length(strings),by = 3)]
   }, times = 5)
   saveRDS(bmark,file = paste0("../bmark/bmark_",test.name,"_",i,".RDS"))
@@ -374,17 +375,17 @@ for(i in c(100,1000,10000,100000)){
   dat <- all[all$MUTATION_ID %in% uniqueIDs[1:i],]
   bmark <- microbenchmark(
     "lapply" ={
-      res_l <- lapply(X = unique(dat$Gene.name), FUN = function(X) mean(dat[dat$Gene.name==X,"FATHMM.score"],na.rm = T))
+      res_l <- base::lapply(X = unique(dat$Gene.name), FUN = function(X) mean(dat[dat$Gene.name==X,"FATHMM.score"],na.rm = T))
     },
     "parLapply" ={
       myCluster <- makeCluster(4, type = "FORK",useXDR=F,.combine=cbind)
       print(myCluster)
       registerDoParallel(myCluster)
-      res_par <- parLapply(cl = myCluster,X = unique(dat$Gene.name), fun = function(X) mean(dat[dat$Gene.name==X,"FATHMM.score"],na.rm = T))
+      res_par <- snow::parLapply(cl = myCluster,X = unique(dat$Gene.name), fun = function(X) mean(dat[dat$Gene.name==X,"FATHMM.score"],na.rm = T))
       stopCluster(myCluster)
     }, 
     "mclapply" = {
-      res_mcl <- mclapply(X = unique(dat$Gene.name), FUN = function(X) mean(dat[dat$Gene.name==X,"FATHMM.score"],na.rm = T),mc.cores = parallel::detectCores())
+      res_mcl <- parallel::mclapply(X = unique(dat$Gene.name), FUN = function(X) mean(dat[dat$Gene.name==X,"FATHMM.score"],na.rm = T),mc.cores = parallel::detectCores())
     }, times = 5)
   # print(identical(res_l,res_par))
   # print(identical(res_mcl,res_par))
@@ -441,4 +442,6 @@ for(f in file.prefix){
 saveRDS(DF,file = paste0("../results/results_",test.name,".RDS"))
 rm(list=ls())
 gc()
+
+
 

@@ -1,0 +1,15 @@
+Test	type	CMD	time	sd
+cat	mac	cat	177.4	5
+cat	gnu	gcat	68.8	40.1
+sort	mac	sort	1393	9
+sort	gnu	gsort	606.1	1.8
+uniq	mac	uniq	1912	38
+uniq	gnu	guniq	240.3	6.6
+wc	mac	wc	245.9	0.6
+wc	gnu	gwc	76.8	2.1
+grep_regex	mac	mgrep	120.2	1.7
+grep_regex	rust	rg	20.3	0.6
+grep_regex	gnu	ggrep	3.8	0.7
+grep_fixed	mac	mgrep	398.7	2.9
+grep_fixed	rust	rg	23.9	0.7
+grep_fixed	gnu	ggrep	3.6	0.3

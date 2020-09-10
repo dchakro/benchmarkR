@@ -2,10 +2,7 @@ rm(list=ls())
 setwd("~/OneDrive - O365 Turun yliopisto/ExtraWorkSync/Klaus-Lab-Data/Big Data/BenchmarkR/COSMIC_test")
 library(ggplot2)
 source('https://raw.githubusercontent.com/dchakro/ggplot_themes/master/DC_theme_generator.R')
-
-# source('https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/ggplotBreaks.R')
-# rm(list=ls()[!ls() %in% c("DC_theme_generator","ggplotBreaks")])
-
+options(stringsAsFactors = F)
 #-----------------
 ## Assign vs concat
 rm(list=ls()[!ls() %in% c("DC_theme_generator")])
@@ -287,3 +284,16 @@ customtheme <- DC_theme_generator(type='L',x.axis.angle = 45,legend = F)
 by(data = DF$time,DF$expr,mean)
 ggplot(data = DF, aes(x = expr, y = time))+geom_boxplot(size=0.5,outlier.color = NA,aes(col = expr))+geom_point(position = position_jitterdodge(jitter.width = 2,seed = 21),aes(fill = expr),pch=21)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("Vectorized mean")+annotate("text",x=1,y=300,label="31.3 µs")+annotate("text",x=2,y=9000,label="8970 µs")
 ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/Vectorization-mean.svg",height = 5,width = 3)
+
+#------------
+# Shell utilities
+rm(list=ls())
+setwd("~/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR")
+library(ggplot2)
+source('https://raw.githubusercontent.com/dchakro/ggplot_themes/master/DC_theme_generator.R')
+options(stringsAsFactors = F)
+dat <- read.table("shell_utils.txt",sep="\t",header = T)
+
+customtheme <- DC_theme_generator(type='L',x.axis.angle = 45,hjust = 1,vjust = 1.25)
+ggplot(data = dat, aes(x = CMD, y = time, label = round(x = time,digits = 0), fill = type))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (ms)")+xlab("Command Flavor")+ggtitle("GNU utils vs Mac/BSD utils")+facet_wrap(~Test,nrow = 1,drop=T,scales = "free")+geom_text(position=position_dodge(width=0.9))+expand_limits(y = 0)
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/shell_utils.svg",height = 4,width = 12)
