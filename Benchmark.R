@@ -445,3 +445,59 @@ gc()
 
 
 
+#----------  Removing columns from a table
+source('https://gist.githubusercontent.com/dchakro/8b1e97ba6853563dd0bb5b7be2317692/raw/parallelRDS.R')
+rm(list=ls()[!ls() %in% c("readRDS.gz","loadRDS","cmdAvail","saveRDS.gz","writeRDS")])
+muts <- readRDS.gz(file = "/Users/deepankar/OneDrive - O365 Turun yliopisto/ExtraWorkSync/Klaus-Lab-Data/Big Data/COSMIC/v92/Full_Database/4.COSMIC.all.coding.Mutatations.RDS")
+
+
+library(microbenchmark)
+
+testDF <- muts [1:200000,]
+testDT <- data.table::as.data.table(testDF)
+rm(muts)
+
+removeCols <- c("ID_tumour","Accession.Number","Histology.subtype.1","Mutation.CDS","Mutation.genome.position","Mutation.somatic.status")
+
+# ---> Automatic evaluation of commands
+# expressionWithin <- parse(text=paste0("rm(",paste0(removeCols,collapse=","),")"))
+# expressionSubset <- parse(text=paste0("c(",paste0(removeCols,collapse=","),")"))
+# 
+# rm(bmark)
+# bmark <- microbenchmark(
+#   DT_null = {tmp <- testDT[,as.vector(removeCols) := NULL]; rm(tmp)},
+#   WITHIN = {tmp <- within(testDF,eval(expressionWithin)); rm(tmp)},
+#   SUBSET = {tmp <- subset(testDF, select = -eval(expressionSubset)); rm(tmp)},
+#   in_operator = {tmp <- testDF[,!names(testDF) %in% removeCols]; rm(tmp)},
+#   which_op = {tmp <- testDF[,-which(colnames(testDF) %in% removeCols)]; rm(tmp)},
+#   times=10)
+# 
+# source("https://raw.githubusercontent.com/dchakro/shared_Rscripts/master/summarySE.R")
+# rm(results)
+# results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+# library(ggplot2)
+# source('https://raw.githubusercontent.com/dchakro/ggplot_themes/master/DC_theme_generator.R')
+# options(stringsAsFactors = F)
+# 
+# results$time <- results$time/1e+06
+# results$sd <- results$sd/1e+06
+# customtheme <- DC_theme_generator(type='L',x.axis.angle = 45)
+# ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("Populating a vector")+geom_text(position=position_dodge(width=0.9))
+
+# ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/assignVconcat_bar.svg",height = 5,width = 14)
+
+rm(bmark)
+bmark <- microbenchmark(
+  DT_null = {tmp <- testDT[,c("ID_tumour","Accession.Number","Histology.subtype.1","Mutation.CDS","Mutation.genome.position","Mutation.somatic.status") := NULL]; rm(tmp)},
+  WITHIN = {tmp <- within(testDF,rm(ID_tumour,Accession.Number,Histology.subtype.1,Mutation.CDS,Mutation.genome.position,Mutation.somatic.status)); rm(tmp)},
+  SUBSET = {tmp <- subset(testDF, select = -c(ID_tumour,Accession.Number,Histology.subtype.1,Mutation.CDS,Mutation.genome.position,Mutation.somatic.status)); rm(tmp)},
+  in_operator = {tmp <- testDF[,!colnames(testDF) %in% removeCols]; rm(tmp)},
+  which_op = {tmp <- testDF[,-which(colnames(testDF) %in% removeCols)]; rm(tmp)},
+  times=10)
+
+rm(results)
+results <- summarySE(bmark,measurevar = "time",groupvars = "expr",statistic = "mean")
+results$time <- results$time/1e+06
+results$sd <- results$sd/1e+06
+ggplot(data = results, aes(x = expr, y = time, label = round(x = time,digits = 2), fill = expr))+geom_col(width=0.5,position=position_dodge(width=0.9))+geom_errorbar(position=position_dodge(width=0.9),aes(ymin=time-sd,ymax=time+sd),linetype="solid",size=0.75,width=0.2)+customtheme+ylab("Time (µs)")+xlab("Method")+ggtitle("Removing columns by name")+geom_text(position=position_dodge(width=0.9))
+ggsave("/Users/deepankar/OneDrive - O365 Turun yliopisto/Git/GitHub/public/benchmarkR/results/removingColumns.svg",height = 5,width = 4)
